@@ -1,4 +1,5 @@
-// Fix: Implemented the ProfileView component.
+
+// Fix: Implemented the ProfileView component with persistent image upload.
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { RecentActivity } from '../components/RecentActivity';
 import type { User } from '../types';
@@ -9,10 +10,10 @@ interface ProfileViewProps {
   onNavigate: (view: string, context: number) => void;
 }
 
-const DetailItem: React.FC<{ icon: React.ReactNode; text?: string }> = ({ icon, text }) => (
+const DetailItem: React.FC<{ icon: React.ReactNode; text?: string; placeholder?: string }> = ({ icon, text, placeholder }) => (
     <div className="flex items-center text-base text-gray-300">
         <div className="flex-shrink-0 w-5 h-5">{icon}</div>
-        <span className="ml-4 truncate">{text || 'Not specified'}</span>
+        <span className={`ml-4 truncate ${!text ? 'text-gray-500 italic' : ''}`}>{text || placeholder || 'Not specified'}</span>
     </div>
 );
 
@@ -73,8 +74,16 @@ export function ProfileView({ user, onUserUpdate, onNavigate }: ProfileViewProps
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const newAvatarUrl = URL.createObjectURL(e.target.files[0]);
-      setEditedUser({ ...editedUser, avatarUrl: newAvatarUrl });
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      
+      reader.onloadend = () => {
+          // Use base64 string for persistence across reloads
+          const base64String = reader.result as string;
+          setEditedUser({ ...editedUser, avatarUrl: base64String });
+      };
+      
+      reader.readAsDataURL(file);
     }
   };
   
@@ -149,8 +158,8 @@ export function ProfileView({ user, onUserUpdate, onNavigate }: ProfileViewProps
                     ) : (
                         <>
                             <DetailItem text={user.email} icon={MailIcon} />
-                            <DetailItem text={user.college} icon={CollegeIcon} />
-                            <DetailItem text={user.course} icon={CourseIcon} />
+                            <DetailItem text={user.college} icon={CollegeIcon} placeholder="College" />
+                            <DetailItem text={user.course} icon={CourseIcon} placeholder="Course" />
                         </>
                     )}
                 </div>

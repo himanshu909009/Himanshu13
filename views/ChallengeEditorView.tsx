@@ -1,5 +1,4 @@
 
-
 import React, { useState, useCallback, useMemo } from 'react';
 import { ProblemDescription } from '../components/ProblemDescription';
 import { CodeEditor } from '../components/CodeEditor';
@@ -38,9 +37,10 @@ export function ChallengeEditorView({ challenge, user, onUserUpdate, onBack }: C
 
     const [language, setLanguage] = useState<Language>(successfulSubmission?.language || 'cpp');
 
+    // Updated storage key to include username, ensuring user-specific code storage
     const getStorageKey = useCallback((lang: Language) => 
-        `challenge-editor-code-${challenge.id}-${lang}`,
-        [challenge.id]
+        `challenge-editor-code-${user.username}-${challenge.id}-${lang}`,
+        [challenge.id, user.username]
     );
     
     const [code, setCode] = useState(() => {

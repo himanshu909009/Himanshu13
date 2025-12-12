@@ -1,5 +1,4 @@
 
-
 import React, { useState, useCallback } from 'react';
 import { CodeEditor } from '../components/CodeEditor';
 import { OutputDisplay } from '../components/OutputDisplay';
@@ -8,9 +7,13 @@ import { LanguageSelector } from '../components/LanguageSelector';
 import { ThemeSelector } from '../components/ThemeSelector';
 import { LANGUAGES, DEFAULT_CODE } from '../constants';
 import { runCodeSimulation, getAiErrorExplanation } from '../services/geminiService';
-import type { Language, SimulationOutput, ThemeName, VirtualFile } from '../types';
+import type { Language, SimulationOutput, ThemeName, VirtualFile, User } from '../types';
 import { THEMES } from '../themes';
 import { TemplateSelectorModal } from '../components/TemplateSelectorModal';
+
+interface CompilerViewProps {
+    user?: User;
+}
 
 const getFileName = (language: Language) => {
     switch (language) {
@@ -30,9 +33,11 @@ const ControlButton: React.FC<{ children: React.ReactNode; onClick?: () => void;
     </button>
 );
 
-export function CompilerView() {
+export function CompilerView({ user }: CompilerViewProps) {
     const [language, setLanguage] = useState<Language>('c');
-    const getStorageKey = (lang: Language) => `compiler-view-code-${lang}`;
+    // Scope the storage key by username to ensure different users have their own scratchpad
+    const username = user?.username || 'guest';
+    const getStorageKey = (lang: Language) => `compiler-view-code-${username}-${lang}`;
 
     const [code, setCode] = useState<string>(() => {
         return localStorage.getItem(getStorageKey(language)) || DEFAULT_CODE[language];

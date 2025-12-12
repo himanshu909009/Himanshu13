@@ -509,19 +509,36 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, them
             
             {errorDisplayLine !== null && (
                  <div
-                    className="absolute left-0 w-full bg-red-500/20 pointer-events-none"
+                    className="absolute left-0 w-full bg-red-500/10 pointer-events-none border-l-4 border-red-500"
                     style={{ top: `${errorDisplayLine * lineHeight + padding.top}px`, height: `${lineHeight}px` }}
                     onMouseEnter={handleMouseEnterOnError}
                     onMouseLeave={handleMouseLeaveOnError}
                 >
                     {errorColumn !== null && charWidth > 0 && (
-                        <div 
-                            className="absolute h-full border-b-2 border-red-500"
-                            style={{ 
-                                left: `${(errorColumn - 1) * charWidth + padding.left}px`,
-                                width: `${charWidth}px` 
-                            }}
-                        />
+                        <>
+                            {/* Squiggly underline effect */}
+                             <div 
+                                className="absolute bottom-0 h-[3px]"
+                                style={{ 
+                                    left: `${(errorColumn - 1) * charWidth + padding.left}px`,
+                                    width: `calc(100% - ${(errorColumn - 1) * charWidth + padding.left}px)`,
+                                    backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='6' height='3' viewBox='0 0 6 3' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 3 L3 0 L6 3' fill='none' stroke='%23EF4444' stroke-width='2'/%3E%3C/svg%3E\")",
+                                    backgroundRepeat: 'repeat-x',
+                                    maxWidth: '50px' // Limit squiggly line length for cleaner look
+                                }}
+                            />
+                            {/* Caret marker */}
+                            <div 
+                                className="absolute text-red-500 font-bold text-lg"
+                                style={{ 
+                                    left: `${(errorColumn - 1) * charWidth + padding.left}px`,
+                                    bottom: '-12px',
+                                    userSelect: 'none'
+                                }}
+                            >
+                                ^
+                            </div>
+                        </>
                     )}
                 </div>
             )}

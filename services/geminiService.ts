@@ -152,8 +152,9 @@ export async function runCodeSimulation(
 
 export async function getAiErrorExplanation(language: Language, code: string, errorMessage: string): Promise<string> {
     const prompt = `
-        You are a friendly and helpful AI coding tutor. A beginner programmer has encountered an error. 
-        Your task is to explain the error in a simple, easy-to-understand way and suggest a fix.
+        You are an expert coding mentor helping a beginner. The user has a syntax or compilation error.
+        
+        **Your Goal:** Guide the user to find the error themselves. Do NOT provide the fixed code snippet. Be extremely concise.
 
         **Language:** ${language}
 
@@ -162,18 +163,17 @@ export async function getAiErrorExplanation(language: Language, code: string, er
         ${code}
         \`\`\`
 
-        **The compilation error message:**
+        **The error message:**
         \`\`\`
         ${errorMessage}
         \`\`\`
 
         **Instructions:**
-        1.  Start by greeting the user in a friendly tone.
-        2.  Explain what the error message means in plain English, avoiding technical jargon as much as possible.
-        3.  Point out the specific line or part of the code that is causing the problem.
-        4.  Clearly explain *why* it's an error.
-        5.  Suggest one or more ways to fix the code. You can provide a corrected code snippet if it's helpful.
-        6.  Keep your explanation concise and encouraging.
+        1.  **Identify the Issue:** Briefly state what concepts are involved (e.g., "missing semicolon", "indentation error", "type mismatch").
+        2.  **Locate it:** Point to the specific line or logic where the error likely is.
+        3.  **Give a Hint:** Provide a specific clue or question to help them fix it (e.g., "Did you remember to close the parenthesis on line 5?" or "Check if you are mixing integers and strings").
+        4.  **Constraint:** Do NOT write the corrected code block. Do NOT write the solution. Only give the hint.
+        5.  **Brevity:** Keep the response under 3 sentences if possible.
     `;
 
     try {
@@ -184,7 +184,7 @@ export async function getAiErrorExplanation(language: Language, code: string, er
         return response.text;
     } catch (error) {
         console.error("Error getting AI explanation:", error);
-        return "Sorry, I couldn't analyze the error. Please try again.";
+        return "Sorry, I couldn't analyze the error. Please check your syntax.";
     }
 }
 

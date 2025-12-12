@@ -2,18 +2,54 @@
 import React, { useState } from 'react';
 
 interface LoginViewProps {
-  onLogin: (role: 'admin' | 'user', email: string, name?: string, avatarUrl?: string) => void;
+  onLogin: (role: 'admin' | 'user', email: string, name?: string, avatarUrl?: string, shouldReset?: boolean) => void;
 }
 
 // Default immutable credentials for demo purposes
 const DEFAULT_CREDS = {
-    user: { email: 'user@coderunner.com', pass: 'user123' },
+    user: { email: 'himanshun102@gmail.com', pass: 'user123' },
     admin: { email: 'admin@coderunner.com', pass: 'admin123' },
     universal: { email: 'demo@coderunner.com', pass: 'demo123' }
 };
 
-// Mutable storage for a newly registered user (simulating a database)
-let registeredUser: { email: string; pass: string; name: string } | null = null;
+const REGISTERED_USERS_KEY = 'registered_users';
+
+interface RegisteredUser {
+    email: string;
+    pass: string;
+    name: string;
+}
+
+// Helper to interact with persistent storage
+const getRegisteredUsers = (): RegisteredUser[] => {
+    try {
+        const stored = localStorage.getItem(REGISTERED_USERS_KEY);
+        return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+        return [];
+    }
+};
+
+const saveRegisteredUser = (user: RegisteredUser) => {
+    const users = getRegisteredUsers();
+    // Normalize email to ensure uniqueness
+    const normalizedEmail = user.email.toLowerCase().trim();
+    
+    const existingIndex = users.findIndex(u => u.email.toLowerCase() === normalizedEmail);
+    // Explicitly overwrite pass and name
+    const userToSave = { 
+        email: normalizedEmail,
+        pass: user.pass,
+        name: user.name
+    };
+
+    if (existingIndex >= 0) {
+        users[existingIndex] = userToSave;
+    } else {
+        users.push(userToSave);
+    }
+    localStorage.setItem(REGISTERED_USERS_KEY, JSON.stringify(users));
+};
 
 type LoginMode = 'login' | 'register' | 'forgot-password';
 
@@ -43,47 +79,53 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
     // Simulate API Latency
     setTimeout(() => {
         const normalizedInputEmail = email.toLowerCase().trim();
-        
-        // Check against Default Credentials
-        const isDefaultUser = role === 'user' && (normalizedInputEmail === DEFAULT_CREDS.user.email || password === DEFAULT_CREDS.user.pass);
-        const isDefaultAdmin = role === 'admin' && (normalizedInputEmail === DEFAULT_CREDS.admin.email || password === DEFAULT_CREDS.admin.pass);
-        
-        // Check Universal Creds (Works for both roles)
-        const isUniversal = (normalizedInputEmail === DEFAULT_CREDS.universal.email && password === DEFAULT_CREDS.universal.pass);
+        let valid = false;
+        let loginName = name; // From state, usually empty on login
 
-        // Check against Registered User
-        let isRegisteredUser = false;
-        if (registeredUser && role === 'user') {
-            if (normalizedInputEmail === registeredUser.email.toLowerCase() && password === registeredUser.pass) {
-                isRegisteredUser = true;
+        // 1. Check Default User
+        if (role === 'user' && normalizedInputEmail === DEFAULT_CREDS.user.email && password === DEFAULT_CREDS.user.pass) {
+            valid = true;
+            loginName = 'Himanshu';
+        } 
+        
+        // 2. Check Default Admin
+        else if (role === 'admin' && normalizedInputEmail === DEFAULT_CREDS.admin.email && password === DEFAULT_CREDS.admin.pass) {
+            valid = true;
+        }
+
+        // 3. Check Universal Creds (Works for both roles)
+        else if (normalizedInputEmail === DEFAULT_CREDS.universal.email && password === DEFAULT_CREDS.universal.pass) {
+            valid = true;
+            if (role === 'user') loginName = 'Demo User';
+        }
+
+        // 4. Check Registered Users (LocalStorage)
+        else {
+            const registeredUsers = getRegisteredUsers();
+            // Strict match on normalized email and password
+            const foundUser = registeredUsers.find(u => u.email.toLowerCase() === normalizedInputEmail && u.pass === password);
+            
+            if (foundUser) {
+                // If found, ensure they are logging in to the correct role interface
+                if (role === 'user') {
+                    valid = true;
+                    loginName = foundUser.name;
+                } else {
+                    setError('This account is registered as a User. Please switch to the User Login tab.');
+                    setIsLoading(false);
+                    return;
+                }
             }
         }
 
-        // Strict password check for the matched account
-        let valid = false;
-        
-        // 1. Check Default User
-        if (role === 'user' && password === DEFAULT_CREDS.user.pass) valid = true;
-        // 2. Check Default Admin
-        if (role === 'admin' && password === DEFAULT_CREDS.admin.pass) valid = true;
-        // 3. Check Registered User (Exact match required)
-        if (isRegisteredUser) valid = true;
-        // 4. Check Universal
-        if (isUniversal) valid = true;
-
-
         if (valid) {
-            const userName = isRegisteredUser && registeredUser ? registeredUser.name : undefined;
-            onLogin(role, email, userName);
+            onLogin(role, email, loginName);
         } else {
-            // Detailed Error Handling
-            
-            // Check if they are cross-logging (Admin creds in User tab)
+            // Detailed Error Handling for specific wrong-tab scenarios
             if (password === DEFAULT_CREDS.admin.pass && role === 'user') {
                  setError('These are Admin credentials. Please switch to the Admin Login tab.');
             } 
-            // Check if they are cross-logging (User creds in Admin tab)
-            else if ((password === DEFAULT_CREDS.user.pass || (registeredUser && password === registeredUser.pass)) && role === 'admin') {
+            else if ((password === DEFAULT_CREDS.user.pass) && role === 'admin') {
                  setError('These are User credentials. Please switch to the User Login tab.');
             } else {
                 setError('Incorrect email or password. Please try again.');
@@ -110,25 +152,16 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
 
       // Simulate Account Creation API
       setTimeout(() => {
-          // Save to mock database
-          registeredUser = {
+          // Save to persistent storage immediately
+          saveRegisteredUser({
               email: email,
               pass: password,
               name: name
-          };
+          });
 
           // Log them in immediately
           onLogin('user', email, name);
       }, 1000);
-  };
-
-  const handleGoogleLogin = () => {
-      setIsLoading(true);
-      setError(null);
-      // Simulate Google OAuth Popup and Redirect
-      setTimeout(() => {
-          onLogin('user', 'alex.google@gmail.com', 'Alex (Google)', 'https://lh3.googleusercontent.com/a/default-user=s96-c');
-      }, 1500);
   };
 
   const handleForgotPasswordRequest = (e: React.FormEvent) => {
@@ -158,10 +191,14 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
       setIsLoading(true);
       
       setTimeout(() => {
-          // Update the mock credentials for the session
-          // Note: In this demo, we update the registered user if it exists, or just pretend for default users
-          if (registeredUser && registeredUser.email.toLowerCase() === email.toLowerCase()) {
-              registeredUser.pass = newPassword;
+          // Update credentials in storage if user exists
+          const users = getRegisteredUsers();
+          const normalizedEmail = email.toLowerCase().trim();
+          const userIndex = users.findIndex(u => u.email.toLowerCase() === normalizedEmail);
+          
+          if (userIndex >= 0) {
+              users[userIndex].pass = newPassword;
+              localStorage.setItem(REGISTERED_USERS_KEY, JSON.stringify(users));
           }
           // Note: We don't update DEFAULT_CREDS to prevent locking out the demo.
 
@@ -187,7 +224,9 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
       }
       setNewPassword('');
       setConfirmPassword('');
-      setName('');
+      if (newMode !== 'register') {
+        setName('');
+      }
   };
 
   const renderForgotPasswordContent = () => {
@@ -425,7 +464,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         className="w-full pl-10 pr-4 py-2.5 bg-gray-800/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-white placeholder-gray-500 transition-all outline-none"
-                                        placeholder={mode === 'login' && role === 'admin' ? "admin@coderunner.com" : "user@coderunner.com"}
+                                        placeholder={mode === 'login' && role === 'admin' ? "admin@coderunner.com" : "himanshun102@gmail.com"}
                                     />
                                 </div>
                             </div>
@@ -498,44 +537,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
                                 )}
                             </button>
                         </form>
-
-                        {/* Divider */}
-                        <div className="relative my-6">
-                            <div className="absolute inset-0 flex items-center">
-                                <div className="w-full border-t border-gray-800"></div>
-                            </div>
-                            <div className="relative flex justify-center text-xs uppercase">
-                                <span className="bg-gray-900/80 backdrop-blur px-2 text-gray-500 rounded">or continue with</span>
-                            </div>
-                        </div>
-
-                        {/* Social Buttons */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <button 
-                                onClick={handleGoogleLogin}
-                                disabled={isLoading}
-                                className="flex items-center justify-center px-4 py-2 border border-gray-700 rounded-lg hover:bg-gray-800 transition-colors group disabled:opacity-50"
-                            >
-                                {/* Google Icon */}
-                                <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
-                                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-                                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-                                </svg>
-                                <span className="text-sm text-gray-300 font-medium group-hover:text-white">Google</span>
-                            </button>
-                            <button 
-                                disabled={isLoading}
-                                className="flex items-center justify-center px-4 py-2 border border-gray-700 rounded-lg hover:bg-gray-800 transition-colors group disabled:opacity-50"
-                            >
-                                {/* GitHub Icon */}
-                                <svg className="h-5 w-5 mr-2 text-gray-300 group-hover:text-white" fill="currentColor" viewBox="0 0 24 24">
-                                    <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
-                                </svg>
-                                <span className="text-sm text-gray-300 font-medium group-hover:text-white">GitHub</span>
-                            </button>
-                        </div>
 
                         {/* Footer */}
                         <div className="mt-8 text-center">

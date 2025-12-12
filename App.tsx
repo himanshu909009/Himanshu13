@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { CoursesView } from './views/DashboardView';
@@ -15,12 +16,13 @@ import type { User, Challenge } from './types';
 
 type View = 'courses' | 'compiler' | 'practice' | 'challengeList' | 'challengeEditor' | 'profile' | 'courseDetail' | 'admin' | 'login';
 
-const USER_STORAGE_KEY = 'userProfile';
+// Updated storage key to invalidate old sessions and enforce the new default user (Himanshu)
+const USER_STORAGE_KEY = 'userProfile_v5';
+const USER_PROFILES_KEY = 'user_profiles'; // New key for persisting all user data by email
 const CHALLENGES_STORAGE_KEY = 'allChallenges';
+const REGISTERED_USERS_KEY = 'registered_users';
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [currentView, setCurrentView] = useState<View>('login');
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
   const [selectedChallengeId, setSelectedChallengeId] = useState<number | null>(null);
   const [editorOrigin, setEditorOrigin] = useState<View | null>(null);
@@ -45,6 +47,17 @@ function App() {
     return { ...INITIAL_USER, role: 'user' };
   });
 
+  // Initialize isLoggedIn based on whether we successfully loaded a user from storage
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
+     return !!localStorage.getItem(USER_STORAGE_KEY);
+  });
+  
+  // Set initial view based on login state
+  const [currentView, setCurrentView] = useState<View>(() => {
+      const hasSession = !!localStorage.getItem(USER_STORAGE_KEY);
+      return hasSession ? 'courses' : 'login';
+  });
+
   const [challenges, setChallenges] = useState<Challenge[]>(() => {
     try {
         const saved = localStorage.getItem(CHALLENGES_STORAGE_KEY);
@@ -65,20 +78,67 @@ function App() {
     localStorage.setItem(CHALLENGES_STORAGE_KEY, JSON.stringify(challenges));
   }, [challenges]);
 
-  const handleLogin = (role: 'admin' | 'user', email: string, name?: string, avatarUrl?: string) => {
-    const derivedName = name || email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1);
+  const handleLogin = (role: 'admin' | 'user', email: string, name?: string, avatarUrl?: string, shouldReset: boolean = false) => {
     
-    const updatedUser = { 
-        ...user, 
-        role,
-        email,
-        name: derivedName,
-        username: derivedName.toLowerCase().replace(/\s/g, ''),
-        avatarUrl: avatarUrl || user.avatarUrl
-    };
+    // Normalize email for consistent lookup
+    const normalizedEmail = email.toLowerCase().trim();
 
-    setUser(updatedUser);
-    handleUserUpdate(updatedUser);
+    // 1. Retrieve all persistent profiles
+    let profiles: Record<string, User> = {};
+    try {
+        const profilesStr = localStorage.getItem(USER_PROFILES_KEY);
+        if (profilesStr) {
+            profiles = JSON.parse(profilesStr);
+        }
+    } catch (e) {
+        console.error("Error loading profiles", e);
+    }
+
+    // 2. Check if a profile exists for this email
+    let targetUser = profiles[normalizedEmail];
+
+    // 3. If no profile exists, create a fresh one (Clean Slate for new users)
+    if (!targetUser) {
+        const derivedName = name || email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1);
+        const derivedUsername = derivedName.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+        // If it's the specific "Alex Google" login, ensure we use the requested name
+        const displayName = (email === 'alex.google@coderunner.com' && name) ? name : derivedName;
+
+        targetUser = {
+            ...INITIAL_USER,
+            name: displayName,
+            username: derivedUsername,
+            email: normalizedEmail,
+            avatarUrl: avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random&color=fff`,
+            college: '', // Ensure new users start with blank college
+            course: '',  // Ensure new users start with blank course
+            role: role,
+            stats: [
+                { label: 'Rank', value: 0 },
+                { label: 'Problems', value: 0 },
+                { label: 'Points', value: 0 },
+            ],
+            submissions: [] 
+        };
+
+        // If this is the default Himanshu user logging in via standard credentials, restore default data if needed
+        // (Only strictly necessary if we wanted to restore the demo data, but user asked for persistence)
+        if (normalizedEmail === 'himanshun102@gmail.com') {
+             targetUser = { ...INITIAL_USER, role };
+        }
+
+        // Save the new profile to persistent store
+        profiles[normalizedEmail] = targetUser;
+        localStorage.setItem(USER_PROFILES_KEY, JSON.stringify(profiles));
+    } else {
+        // If profile exists, ensure role matches current login (optional, but good for consistency)
+        targetUser.role = role;
+    }
+
+    // 4. Set the active session user
+    setUser(targetUser);
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(targetUser));
     setIsLoggedIn(true);
     setCurrentView(role === 'admin' ? 'admin' : 'courses');
   };
@@ -86,12 +146,24 @@ function App() {
   const handleLogout = () => {
     setIsLoggedIn(false);
     setCurrentView('login');
+    // Clear the stored user profile to ensure next session starts fresh (or requires login)
+    localStorage.removeItem(USER_STORAGE_KEY);
+    // Reset internal state to avoid showing phantom data before next login
+    setUser({...INITIAL_USER, role: 'user'});
   };
 
   const handleUserUpdate = (updatedUser: User) => {
     try {
+      // 1. Update current session storage
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
       setUser(updatedUser);
+
+      // 2. Update persistent profile storage
+      const profilesStr = localStorage.getItem(USER_PROFILES_KEY);
+      const profiles = profilesStr ? JSON.parse(profilesStr) : {};
+      profiles[updatedUser.email.toLowerCase().trim()] = updatedUser;
+      localStorage.setItem(USER_PROFILES_KEY, JSON.stringify(profiles));
+
     } catch (error) {
       console.error('Error saving user to localStorage:', error);
       setUser(updatedUser);
@@ -171,7 +243,7 @@ function App() {
             }
         }} />;
       case 'compiler':
-        return <CompilerView />;
+        return <CompilerView user={user} />;
       case 'profile':
         return <ProfileView user={user} onUserUpdate={handleUserUpdate} onNavigate={(view, id) => handleNavigate(view as View, id)} />;
       case 'challengeList':
@@ -229,7 +301,7 @@ function App() {
             </div>
         );
       default:
-        return <CompilerView />;
+        return <CompilerView user={user} />;
     }
   };
 

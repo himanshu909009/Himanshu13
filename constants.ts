@@ -1,6 +1,9 @@
 
+
+
+
 // Fix: Populated the file with constant data used across the application.
-import type { Language, LanguageOption, User, Course, PracticeProblem, Contest, PastContest, LeaderboardUser, ContestProblem, RecentActivityItem, CourseDetails, Challenge, Snippet } from './types';
+import type { Language, LanguageOption, User, Course, PracticeProblem, Contest, PastContest, LeaderboardUser, ContestProblem, RecentActivityItem, CourseDetails, Challenge, Snippet, DayChallenge } from './types';
 
 export const LANGUAGES: LanguageOption[] = [
   { id: 'c', name: 'C' },
@@ -113,8 +116,7 @@ export const LANGUAGE_KEYWORDS: Record<Language, string[]> = {
     'delete', 'do', 'double', 'else', 'enum', 'eval', 'export', 'extends',
     'false', 'final', 'finally', 'float', 'for', 'function', 'goto', 'if',
     'implements', 'import', 'in', 'instanceof', 'int', 'interface', 'let',
-    'long', 'native', 'new', 'null', 'package', 'private', 'protected',
-    'public', 'return', 'short', 'static', 'super', 'switch', 'synchronized',
+    'long', 'native', 'new', 'null', 'package', 'private', 'protected', 'public', 'return', 'short', 'static', 'super', 'switch', 'synchronized',
     'this', 'throw', 'throws', 'transient', 'true', 'try', 'typeof', 'var',
     'void', 'volatile', 'while', 'with', 'yield', 'async', 'of'
   ],
@@ -152,25 +154,19 @@ export const LANGUAGE_FUNCTIONS: Record<Language, string[]> = {
 
 
 export const INITIAL_USER: User = {
-  name: 'Himanshu',
-  username: 'himanshu',
-  avatarUrl: 'https://i.pravatar.cc/150?u=himanshu_profile',
-  email: 'himanshun102@gmail.com',
-  college: 'SAGE University',
-  course: 'Computer Science',
+  name: '',
+  username: '',
+  avatarUrl: '',
+  email: '',
+  college: '',
+  course: '',
   role: 'user',
   stats: [
-    { label: 'Rank', value: 1234 },
-    { label: 'Problems', value: 150 },
-    { label: 'Points', value: 3200 },
+    { label: 'Rank', value: 0 },
+    { label: 'Problems', value: 0 },
+    { label: 'Points', value: 0 },
   ],
-  submissions: [
-    { id: 1, challengeId: 11, title: 'Largest of Three Numbers', status: 'Accepted', timestamp: new Date(new Date().setDate(new Date().getDate() - 1)).toISOString(), language: 'cpp', code: '#include <iostream>\n#include <algorithm>\n\nint main() {\n    int a, b, c;\n    std::cin >> a >> b >> c;\n    int max_val = std::max({a, b, c});\n    std::cout << max_val;\n    return 0;\n}' },
-    { id: 2, challengeId: 21, title: 'Matrix Multiplication', status: 'Wrong Answer', timestamp: new Date(new Date().setDate(new Date().getDate() - 2)).toISOString(), language: 'cpp', code: '#include <iostream>\n\nint main() {\n    // Incorrect logic\n    std::cout << "1 2 3\\n4 5 6\\n7 8 9";\n    return 0;\n}' },
-    { id: 3, challengeId: 8, title: 'Factorial of a Number', status: 'Accepted', timestamp: new Date(new Date().setDate(new Date().getDate() - 2)).toISOString(), language: 'cpp', code: '#include <iostream>\n\nlong long factorial(int n) {\n    if (n < 0) return -1; // Or handle error appropriately\n    if (n == 0) return 1;\n    long long result = 1;\n    for (int i = 1; i <= n; ++i) {\n        result *= i;\n    }\n    return result;\n}\n\nint main() {\n    int n;\n    std::cin >> n;\n    std::cout << factorial(n) << std::endl;\n    return 0;\n}' },
-    { id: 4, challengeId: 17, title: 'GCD with Recursion', status: 'Time Limit Exceeded', timestamp: new Date(new Date().setDate(new Date().getDate() - 5)).toISOString(), language: 'cpp', code: '#include <iostream>\n\n// Intentionally inefficient to cause TLE\nlong long gcd(long long a, long long b) {\n    while(a != b){\n        if(a > b)\n            a -= b;\n        else\n            b -= a;\n    } \n    return a;\n}\n\nint main() {\n    long long a, b;\n    std::cin >> a >> b;\n    std::cout << gcd(a, b) << std::endl;\n    return 0;\n}' },
-    { id: 5, challengeId: 1, title: 'Print "Hello, World!"', status: 'Accepted', timestamp: new Date(new Date().setDate(new Date().getDate() - 10)).toISOString(), language: 'cpp', code: '#include <iostream>\n\nint main() {\n    std::cout << "Hello, World!" << std::endl;\n    return 0;\n}' },
-  ]
+  submissions: []
 };
 
 export const COURSES: Course[] = [
@@ -183,11 +179,7 @@ export const PRACTICE_LANGUAGES: PracticeProblem[] = [
     { name: 'Practice C++', description: 'Solve C++ Practice problems online with the Practice C++ path on CodeChef. Answer MCQs exercise...', problems: 206, level: 'Beginner level', icon: `<svg width="32" height="32" viewBox="0 0 128 128"><path d="M51.4 128C23.1 128 0 104.9 0 76.6 0 48.3 23.1 25.2 51.4 25.2c10.2 0 19.8 3 27.9 8.2l-11.4 19.7c-3.8-2.2-8.3-3.6-13.3-3.6-8.9 0-16.7 5.1-20.2 12.6-1.5 3.2-2.3 6.7-2.3 10.4 0 3.7.8 7.2 2.3 10.4 3.5 7.5 11.3 12.6 20.2 12.6 5.1 0 9.7-1.4 13.6-3.8l11.2 19.5c-8.2 5.3-18.1 8.6-28.8 8.6zm50-51.4h-22v-22h-17.4v22h-22v17.4h22v22h17.4v-22h22V76.6z" fill="#004482"/></svg>`, color: 'bg-blue-500' },
     { name: 'Practice Python', description: 'Solve Python coding problems online with Practice Python on CodeChef. Write code for over 19...', problems: 192, level: 'Beginner level', icon: `<svg width="32" height="32" viewBox="0 0 128 128"><path d="M64 128c35.4 0 64-28.6 64-64S99.4 0 64 0 0 28.6 0 64s28.6 64 64 64z" fill="#306998"/><path d="M87.6 92.8H64c-3.2 0-5.8-2.6-5.8-5.8V70.4c0-4.6 3.6-8.5 8.1-8.9l14.4-1.1c2.2-.2 4-2.1 4-4.4V40.4c0-2.4-1.9-4.4-4.3-4.4H42.7c-2.4 0-4.3 2-4.3 4.4v9.3c0 2.4 2 4.4 4.4 4.4h21.4c3.2 0 5.8 2.6 5.8 5.8v16.6c0 4.6-3.6 8.5-8.1 8.9l-14.4 1.1c-2.2-.2-4 2.1-4 4.4v15.6c0 2.4 1.9 4.4 4.3 4.4h45c2.4 0 4.3-2 4.3-4.4v-9.3c.1-2.4-1.9-4.4-4.3-4.4z" fill="#FFD43B"/><ellipse cx="53.4" cy="51.8" rx="5.8" ry="5.8" fill="#306998"/><ellipse cx="74.6" cy="76.2" rx="5.8" ry="5.8" fill="#306998"/></svg>`, color: 'bg-yellow-500' },
     { name: 'Practice Java', description: 'Complete your Java coding practice with our online Java practice course on CodeChef. Solve over...', problems: 180, level: 'Beginner level', icon: `<svg width="32" height="32" viewBox="0 0 128 128"><circle cx="64" cy="64" r="64" fill="#5382a1"/><path d="M102.4 78.1c-2.6-1.2-4.3-2.6-4.3-5.3 0-2.3 1.2-4.2 3.8-5.7l9.1-5.3c3.4-2 5.1-4.7 5.1-8.1s-1.7-6.2-5.1-8.1l-9-5.3c-2.6-1.5-3.8-3.4-3.8-5.7 0-2.7 1.8-4.2 4.3-5.3 4.2-1.9 6.8-5.1 6.8-9.4 0-6.1-5-11-13.3-11-4.2 0-7.8 1.4-10.3 4-2.6 2.7-3.9 5.8-3.9 9.4 0 5.4 3.7 9.8 9.3 11.5 2.1.6 3.4 1.7 3.4 3.6 0 2.2-1.5 3.6-4.5 5.2l-8.6 4.6c-3.1 1.7-4.7 3.9-4.7 6.7 0 2.8 1.6 5 4.7 6.7l8.6 4.6c3.1 1.7 4.5 3.1 4.5 5.2s-1.3 3-3.4 3.6c-5.6 1.8-9.3 6.1-9.3 11.5 0 3.6 1.3 6.7 3.9 9.4 2.5 2.6 6.1 4 10.3 4 8.3 0 13.3-5 13.3-11 0-4.3-2.6-7.5-6.8-9.4z" fill="#fff"/><path d="M57.4 97.4c-4.3-2-7-5.4-7-10.4V41.3c0-4.9 2.7-8.4 7-10.4 4.3-2 9.5-2 15.6 0 4.3 2 6.9 5.4 6.9 10.4v45.7c0 4.9-2.6 8.4-6.9 10.4-6.2 2-11.3 2-15.6 0zm9-60.8c-1.7-.8-2.6-2.1-2.6-4.2 0-2.3 1-3.9 2.9-4.8 2-.9 4.6-.9 7.9 0 1.9.9 2.8 2.5 2.8 4.8 0 2.1-1 3.4-2.8 4.2-3.3.9-6.2.9-8.2 0z" fill="#f89820"/></svg>`, color: 'bg-orange-700' },
-    { name: 'Practice C', description: 'Improve your C programming skills with over 200 coding practice problems. Solve these beginner...', problems: 222, level: 'Beginner level', icon: `<svg width="32" height="32" viewBox="0 0 128 128"><path d="M64 0C28.7 0 0 28.7 0 64s28.7 64 64 64 64-28.7 64-64S99.3 0 64 0zm33.1 91.8c-4.3 4.3-10.1 6.5-17.4 6.5-6.4 0-12-2.1-16.7-6.2-4.8-4.2-7.8-9.6-9-16.2H89v-14H54.2c.8-6.1 3.6-11.2 8.4-15.3s10.9-6.2 18.2-6.2c6.9 0 12.6 2.1 17.1 6.3 4.5 4.2 6.7 9.8 6.7 16.8H128c0-9.3-2.9-17.5-8.6-24.5-5.7-7-13.6-12.2-23.5-15.5s-21-4.9-33.1-4.9c-12.8 0-24.4 2.1-34.6 6.2s-18.3 10-24.2 17.5-8.8 16.5-8.8 26.9 2.9 19.3 8.8 26.7 13.8 13.2 24.2 17.4 21.8 6.3 34.6 6.3c12.1 0 23-1.7 32.7-5.2s17.8-8.8 24.1-16.2c-5.7-5.9-12.2-8.8-19.5-8.8-7.1.1-13 2.4-17.7 6.9z" fill="#a8b9cc"/></svg>`, color: 'bg-indigo-700' },
-    { name: 'Practice Javascript', description: 'Practice JavaScript online with our set of coding problems selected for beginners. Solve these JavaScript...', problems: 169, level: 'Beginner level', icon: `<svg width="32" height="32" viewBox="0 0 128 128"><path d="M0 0h128v128H0z" fill="#f0db4f"/><path d="M48.4 59.5c.2-2.5 1.7-4.5 4.1-5.6 2.3-1.1 5.3-1.7 8.8-1.7 3.4 0 6.2.4 8.4 1.3 2.2.9 3.8 2.4 4.8 4.6.9 2.1 1.4 4.8 1.4 8s-.5 5.9-1.5 8.1c-1 2.2-2.6 3.8-4.8 4.7-2.2.9-5 1.3-8.3 1.3-4.4 0-7.8-.8-10.3-2.3-2.5-1.6-4.1-3.8-4.8-6.8H36c.9 4.3 3 7.8 6.4 10.5 3.4 2.7 7.7 4.1 13 4.1 4.2 0 8-.7 11.4-2.2 3.4-1.5 6.1-3.7 8-6.6s2.9-6.5 2.9-10.7c0-3-1-6.8-2.1-9.2-1.7-2.6-3.8-4.9-6.3-6.6-2.5-1.8-5.3-3.1-8.5-4-3.2-.8-6.7-1.2-10.5-1.2-5.1 0-9.5 1-13.3 3.1-3.8 2.1-6.5 5-8.1 8.8l10.9 6.5zm40.5 20c-1.3 2.6-3.2 4.6-5.8 5.9-2.6 1.3-5.6 2-9.1 2-3.6 0-6.8-.6-9.5-1.9-2.7-1.3-4.8-3.1-6.3-5.6-1.5-2.5-2.2-5.4-2.2-8.7s.7-6.2 2.2-8.7c1.5-2.5 3.6-4.4 6.3-5.6 2.7-1.2 5.9-1.8 9.5-1.8 3.5 0 6.5.6 9.1 1.9 2.6 1.3 4.5 3.1 5.8 5.7 1.3 2.6 1.9 5.5 1.9 8.7s-.6 6.1-1.9 8.6zm-11-14.7c-1.1-1.3-2.5-2-4.3-2s-3.2.7-4.3 2c-1.1 1.3-1.7 3-1.7 5.2s.6 3.9 1.7 5.1c1.1 1.2 2.5 1.8 4.3 1.8s3.2-.6 4.3-1.8c1.1-1.2 1.7-2.9 1.7-5.1s-.5-3.9-1.7-5.2z"/></svg>`, color: 'bg-yellow-400' },
-    { name: 'Projects using HTML / CSS', description: 'Practice HTML and CSS with our on site editor. Code 7 guided projects to build sites. Solve MCQ exercise...', problems: 183, level: 'Beginner level', icon: `<svg width="32" height="32" viewBox="0 0 128 128"><path d="M12.1 0h103.8L105 114.2 64 128 23.1 114.2 12.1 0z" fill="#e44d26"/><path d="M64 117.1V10.8h41L96 105.1 64 117.1z" fill="#f16529"/><path d="M30.4 21.6h33.6v10.8H35.7l2.1 24h26.2v-10.8H42.3l-2.1-13.2h21.7v34.6L64 86.8v11.5l-19-5.1.1-.9 2.2-25.1-19.4.1 2.2 24.5 33.5 9.1h.1v-10.9l-22.7-6.1-1.5-17.6h24.2V32.4H32.6l-2.2-10.8z" fill="#ebebeb"/><path d="M64 68.2h22.7l-2.1 23-18.5 5.1v-11.5l10.2-2.8.9-10.1H64v-10.8h33.6l-.1 1.3-3.2 35.2-30.3 8.1v10.9l39.5-10.7L102.7 21.6H64v10.8h28.4l-.9 11.2H64v34.6z" fill="#fff"/></svg>`, color: 'bg-orange-500' },
-    { name: 'SQL Practice Queries', description: 'Practice queries on Select, Where, Limit, Order by, Aggregates, Group by, Joins, Sub-queries and Case...', problems: 93, level: 'Intermediate level', icon: `<svg width="32" height="32" viewBox="0 0 128 128"><path d="M128 64c0 35.4-28.6 64-64 64S0 99.4 0 64 28.6 0 64 0s64 28.6 64 64z" fill="#00758f"/><path d="M64 112.8c-27 0-48.8-21.9-48.8-48.8S37 15.2 64 15.2c12.2 0 23.3 4.5 31.8 11.8l-15 14.8c-3.1-2.6-7.2-4.2-11.8-4.2-9.6 0-17.4 7.8-17.4 17.4s7.8 17.4 17.4 17.4c5.1 0 9.7-2.2 12.8-5.8h-12.8V59.4h29.5c.3 1.6.4 3.2.4 4.9 0 18.2-11.5 31.1-28.7 31.1zm33-47.5L84.8 77.5c2.3.1 4.7.2 7 .2 14.1 0 25.6-11.5 25.6-25.6 0-3.3-.6-6.4-1.8-9.3z" fill="#fff"/></svg>`, color: 'bg-blue-700' },
-    { name: 'Practice PHP', description: 'Enhance your PHP skills with our hands-on practice course. Master PHP syntax and real-world...', problems: 199, level: 'Beginner level', icon: `<svg width="32" height="32" viewBox="0 0 128 128"><ellipse cx="64" cy="64" rx="64" ry="44" fill="#6181b6"/><text x="26" y="86" font-family="sans-serif" font-size="64" fill="#fff">php</text></svg>`, color: 'bg-indigo-500' },
+    { name: 'Practice C', description: 'Improve your C programming skills with over 200 coding practice problems. Solve these beginner...', problems: 222, level: 'Beginner level', icon: `<svg width="32" height="32" viewBox="0 0 128 128"><path d="M64 0C28.7 0 0 28.7 0 64s28.7 64 64 64 64-28.7 64-64S99.3 0 64 0zm33.1 91.8c-4.3 4.3-10.1 6.5-17.4 6.5-6.4 0-12-2.1-16.7-6.2-4.8-4.2-7.8-9.6-9-16.2H89v-14H54.2c.8-6.1 3.6-11.2 8.4-15.3s10.9-6.2 18.2-6.2c6.9 0 12.6 2.1 17.1 6.3 4.5 4.2 6.7 9.8 6.7 16.8H128c0-9.3-2.9-17.5-8.6-24.5-5.7-7-13.6-12.2-23.5-15.5s-21-4.9-33.1-4.9c-12.8 0-24.4 2.1-34.6 6.2s-18.3 10-24.2 17.5-8.8 24.1-16.2c-5.7-5.9-12.2-8.8-19.5-8.8-7.1.1-13 2.4-17.7 6.9z" fill="#a8b9cc"/></svg>`, color: 'bg-indigo-700' },
 ];
 
 export const CONTESTS: Contest[] = [
@@ -1021,4 +1013,37 @@ export const SYLLABUS_MODULES = [
              { title: 'Multiple Inheritance', difficulty: 'Medium', challengeId: 30 },
         ]
     }
+];
+
+export const DAYS_OF_CODE_DATA: DayChallenge[] = [
+    { day: 1, title: 'First Steps: Printing', topic: 'Input/Output', challengeId: 1 },
+    { day: 2, title: 'Basic Arithmetic', topic: 'Operators', challengeId: 2 },
+    { day: 3, title: 'Variables & Types', topic: 'Data Types', challengeId: 4 },
+    { day: 4, title: 'Loops Introduction', topic: 'Control Flow', challengeId: 3 },
+    { day: 5, title: 'Temperature Converter', topic: 'Basic Math', challengeId: 5 },
+    { day: 6, title: 'Geometry Basics', topic: 'Math', challengeId: 6 },
+    { day: 7, title: 'Arithmetic Operations', topic: 'Operators', challengeId: 7 },
+    { day: 8, title: 'Bitwise Operations', topic: 'Bit Manipulation', challengeId: 9 },
+    { day: 9, title: 'Conditional Logic', topic: 'Control Flow', challengeId: 10 },
+    { day: 10, title: 'Comparisons', topic: 'Control Flow', challengeId: 11 },
+    { day: 11, title: 'Grading Logic', topic: 'Control Flow', challengeId: 12 },
+    { day: 12, title: 'For Loops', topic: 'Loops', challengeId: 13 },
+    { day: 13, title: 'Summation', topic: 'Loops', challengeId: 14 },
+    { day: 14, title: 'Multiplication Table', topic: 'Loops', challengeId: 15 },
+    { day: 15, title: 'Simple Functions', topic: 'Functions', challengeId: 16 },
+    { day: 16, title: 'Recursion Basics', topic: 'Functions', challengeId: 17 },
+    { day: 17, title: 'Array Initialization', topic: 'Arrays', challengeId: 19 },
+    { day: 18, title: 'Reversing Arrays', topic: 'Arrays', challengeId: 20 },
+    { day: 19, title: 'Pointer Basics', topic: 'Pointers', challengeId: 22 },
+    { day: 20, title: 'Swapping with Pointers', topic: 'Pointers', challengeId: 23 },
+    { day: 21, title: 'Dynamic Memory', topic: 'Memory Management', challengeId: 24 },
+    { day: 22, title: 'Structures & Classes', topic: 'OOP', challengeId: 25 },
+    { day: 23, title: 'Constructors', topic: 'OOP', challengeId: 26 },
+    { day: 24, title: 'Operator Overloading', topic: 'OOP', challengeId: 27 },
+    { day: 25, title: 'Inheritance', topic: 'OOP', challengeId: 28 },
+    { day: 26, title: 'Polymorphism', topic: 'OOP', challengeId: 29 },
+    { day: 27, title: 'Calculator Logic', topic: 'Control Flow', challengeId: 31 },
+    { day: 28, title: 'Variable Swapping', topic: 'Basic Logic', challengeId: 32 },
+    { day: 29, title: 'Rectangle Math', topic: 'Geometry', challengeId: 33 },
+    { day: 30, title: 'Multiple Inheritance', topic: 'OOP', challengeId: 30 },
 ];

@@ -1,4 +1,6 @@
 
+
+
 // Fix: Populated the file with type definitions used across the application.
 export type Language = 'c' | 'cpp' | 'java' | 'javascript' | 'python';
 
@@ -190,4 +192,11 @@ export interface Snippet {
   title: string;
   description: string;
   code: string;
+}
+
+export interface DayChallenge {
+    day: number;
+    title: string;
+    topic: string;
+    challengeId: number;
 }
