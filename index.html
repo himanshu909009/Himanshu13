@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Online Compiler</title>
     <script src="https://cdn.tailwindcss.com"></script>
-  <script type="importmap">
+    <script type="importmap">
 {
   "imports": {
     "react/": "https://aistudiocdn.com/react@^19.2.0/",
@@ -16,54 +16,25 @@
   }
 }
 </script>
-    <!-- Prism Themes -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" data-prism-theme title="dark">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-coy.min.css" data-prism-theme title="light" disabled>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-solarizedlight.min.css" data-prism-theme title="solarized" disabled>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css" data-prism-theme title="monokai" disabled>
+    <!-- Single Standard Prism Theme -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
     <style>
-      /* Fix: Added more normalization rules to fix cursor alignment. */
       textarea, pre[class*="language-"] code {
           -moz-tab-size: 4;
           tab-size: 4;
-          word-spacing: normal;
-          font-variant-ligatures: none;
       }
-      /* Override Prism's default styles to integrate with our component structure */
       pre[class*="language-"] {
-        background: none !important;
         margin: 0 !important;
+        background: transparent !important;
         padding: 0 !important;
-        border-radius: 0 !important;
-        font-family: inherit;
-        font-size: inherit;
-        line-height: inherit;
-        white-space: pre-wrap;
       }
-      /* Fix: Ensure the code element inside pre inherits the font-family, overriding Prism's default font. This is crucial for cursor alignment. */
-      pre[class*="language-"] code {
-         padding: 1rem !important;
-         display: block;
-         font-family: inherit;
-      }
-      .token.comment, .token.prolog, .token.doctype, .token.cdata {
-        color: #999;
-      }
-      @keyframes blink {
-        from, to { opacity: 1; }
-        50% { opacity: 0; }
-      }
-      .blinking-cursor {
-        animation: blink 1.2s step-end infinite;
-      }
+      .token.comment { color: #999; }
     </style>
 </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
-    
-    <!-- Prism Core & Languages -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-clike.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-cpp.min.js"></script>

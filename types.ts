@@ -1,7 +1,4 @@
 
-
-
-// Fix: Populated the file with type definitions used across the application.
 export type Language = 'c' | 'cpp' | 'java' | 'javascript' | 'python';
 
 export interface LanguageOption {
@@ -57,20 +54,6 @@ export interface User {
   submissions: RecentActivityItem[];
 }
 
-export type ThemeName = 'dark' | 'light' | 'solarized' | 'monokai';
-
-export interface Theme {
-  name: ThemeName;
-  background: string;
-  text: string;
-  lineNumber: string;
-  lineNumberBg: string;
-  border: string;
-  caret: string;
-  cursorColor: string;
-  lineNumberBorder?: string;
-}
-
 export interface Course {
   title: string;
   category: string;
@@ -89,32 +72,6 @@ export interface PracticeProblem {
   color: string;
 }
 
-export interface Contest {
-  title: string;
-  startTime: string;
-  duration: string;
-  participants: number;
-}
-
-export interface PastContest {
-  name: string;
-  date: string;
-}
-
-export interface LeaderboardUser {
-  rank: number;
-  name: string;
-  score: number;
-  avatarUrl?: string;
-}
-
-export interface ContestProblem {
-  id: string;
-  title: string;
-  difficulty: 'Easy' | 'Medium' | 'Hard';
-  points: number;
-}
-
 export interface RecentActivityItem {
   id: number;
   challengeId: number;
@@ -123,35 +80,6 @@ export interface RecentActivityItem {
   timestamp: string;
   code: string;
   language: Language;
-}
-
-export interface CourseLesson {
-    id: number;
-    title: string;
-    duration: string;
-    type: 'video' | 'reading' | 'quiz' | 'practice';
-}
-
-export interface CourseModule {
-    id: number;
-    title: string;
-    lessons: CourseLesson[];
-}
-
-export interface CourseDetails {
-    title: string;
-    description: string;
-    icon: string;
-    tags: {
-        certification: boolean;
-        rating: string;
-    };
-    stats: {
-        lessons: number;
-        hours: number;
-        problems: number;
-    };
-    modules: CourseModule[];
 }
 
 export interface TestCase {
@@ -186,6 +114,7 @@ export interface Challenge {
   boilerplateCode?: string;
   solutionCode?: string;
   testCases?: TestCase[];
+  problemImage?: string;
 }
 
 export interface Snippet {
@@ -199,4 +128,68 @@ export interface DayChallenge {
     title: string;
     topic: string;
     challengeId: number;
+}
+
+// Added missing types to fix import errors in other files
+export interface Contest {
+  title: string;
+  startTime: string;
+  duration: string;
+  participants: number;
+}
+
+export interface PastContest {
+  name: string;
+  date: string;
+}
+
+export interface LeaderboardUser {
+  rank: number;
+  name: string;
+  score: number;
+}
+
+export interface ContestProblem {
+  id: string;
+  title: string;
+  difficulty: 'Easy' | 'Medium' | 'Hard';
+  points: number;
+}
+
+export interface Lesson {
+  id: number;
+  title: string;
+  duration: string;
+  type: 'video' | 'reading' | 'practice' | 'quiz';
+}
+
+export interface CourseModule {
+  id: number;
+  title: string;
+  lessons: Lesson[];
+}
+
+export interface CourseDetails {
+  title: string;
+  description: string;
+  icon: string;
+  tags: {
+    certification: boolean;
+    rating: string;
+  };
+  stats: {
+    lessons: number;
+    hours: number;
+    problems: number;
+  };
+  modules: CourseModule[];
+}
+
+export type ThemeName = 'dark' | 'light' | string;
+
+export interface Theme {
+  name: ThemeName;
+  background: string;
+  border: string;
+  text: string;
 }

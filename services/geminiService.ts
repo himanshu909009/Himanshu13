@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 // Fix: Use 'import type' for type-only imports and combine them.
 import type { Language, SimulationOutput, VirtualFile, TestCase } from '../types';
@@ -124,8 +125,9 @@ export async function runCodeSimulation(
   `;
 
   try {
+    // Fixed: Always use ai.models.generateContent and compliant model for complex tasks
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3-pro-preview",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -177,8 +179,9 @@ export async function getAiErrorExplanation(language: Language, code: string, er
     `;
 
     try {
+        // Fixed: Always use ai.models.generateContent and compliant model for complex tasks
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-3-pro-preview',
             contents: prompt,
         });
         return response.text;
@@ -235,8 +238,9 @@ export async function getAiFailureAnalysis(
     `;
 
     try {
+        // Fixed: Always use ai.models.generateContent and compliant model for complex tasks
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-3-pro-preview',
             contents: prompt,
         });
         return response.text;
@@ -300,8 +304,9 @@ export async function getAiCodeCompletion(
   `;
 
   try {
+    // Fixed: Always use ai.models.generateContent and compliant model for complex tasks
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3-pro-preview",
       contents: prompt,
       config: {
         responseMimeType: "application/json",

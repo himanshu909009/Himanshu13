@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useRef } from 'react';
 import type { SimulationOutput, TestResult } from '../types';
 
@@ -56,56 +54,6 @@ const OutputContent: React.FC<{ output: SimulationOutput }> = ({ output }) => {
     return <pre className={`${className} whitespace-pre-wrap break-words`}>{content}</pre>;
 };
 
-const DetailedTestResults: React.FC<{ results: TestResult[] }> = ({ results }) => {
-    const passCount = results.filter(r => r.status === 'pass').length;
-    const totalCount = results.length;
-
-    const getStatusIcon = (status: TestResult['status']) => {
-        switch (status) {
-            case 'pass': return <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>;
-            case 'fail': return <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" /></svg>;
-            case 'error': return <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>;
-        }
-    };
-
-    const CodeBlock: React.FC<{ title: string, content: string, className?: string }> = ({ title, content, className='' }) => (
-        <div className="mt-2">
-            <p className="text-xs font-semibold text-gray-400">{title}</p>
-            <pre className={`bg-gray-900/50 p-2 mt-1 rounded-md text-sm whitespace-pre-wrap break-words ${className}`}>{content || '(empty)'}</pre>
-        </div>
-    );
-    
-    return (
-        <div>
-            <div className="mb-4 pb-2 border-b border-slate-600">
-                <h4 className="text-lg font-semibold">Test Results</h4>
-                <p className="text-gray-400">{passCount} / {totalCount} test cases passed.</p>
-            </div>
-            <div className="space-y-4">
-                {results.map((result, index) => (
-                    <div key={index} className="p-3 bg-slate-800/50 rounded-md">
-                        <div className="flex items-center gap-3">
-                            {getStatusIcon(result.status)}
-                            <span className="font-semibold">Test Case #{index + 1}</span>
-                            <span className={`text-sm font-bold capitalize ${result.status === 'pass' ? 'text-green-400' : result.status === 'fail' ? 'text-red-400' : 'text-yellow-400'}`}>
-                                {result.status}
-                            </span>
-                        </div>
-                        {result.status !== 'pass' && (
-                            <div className="mt-3 pl-8">
-                                <CodeBlock title="Input" content={result.testCase.input} />
-                                <CodeBlock title="Expected Output" content={result.testCase.expectedOutput} className="text-green-300"/>
-                                {result.status === 'fail' && <CodeBlock title="Actual Output" content={result.actualOutput} className="text-red-300"/>}
-                                {result.status === 'error' && <CodeBlock title="Error (stderr)" content={result.errorMessage || ''} className="text-yellow-300"/>}
-                            </div>
-                        )}
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-};
-
 export const OutputDisplay: React.FC<OutputDisplayProps> = ({ output, isLoading, error, onInputSubmit, onClear, testResults, isTesting }) => {
     const [currentLine, setCurrentLine] = useState('');
     const inputRef = useRef<HTMLInputElement>(null);
@@ -134,54 +82,55 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({ output, isLoading,
     const renderContent = () => {
         if (isTesting) {
              return (
-                <div className="flex items-center justify-center h-full">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-                     <span className="ml-4 text-gray-300">Running tests...</span>
+                <div className="flex flex-col items-center justify-center h-full gap-4">
+                    <div className="relative w-12 h-12">
+                        <div className="absolute inset-0 border-4 border-blue-500/20 rounded-full"></div>
+                        <div className="absolute inset-0 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                     <span className="text-blue-400 font-medium animate-pulse">Running Hidden Test Cases...</span>
                 </div>
             );
         }
         
         if (testResults) {
-            const isOfficialSubmission = testResults[0]?.testCase.isLocked;
+            const passCount = testResults.filter(r => r.status === 'pass').length;
+            const totalCount = testResults.length;
+            const allPassed = passCount === totalCount;
 
-            if (isOfficialSubmission) {
-                const passCount = testResults.filter(r => r.status === 'pass').length;
-                const totalCount = testResults.length;
-                const allPassed = passCount === totalCount;
-    
-                let finalStatusText: string;
-                let finalStatusColor: string;
-    
-                if (allPassed) {
-                    finalStatusText = "Accepted";
-                    finalStatusColor = "text-green-400";
-                } else {
-                    const firstFail = testResults.find(r => r.status !== 'pass');
-                    if (firstFail?.status === 'error') {
-                        finalStatusText = "Runtime Error";
-                    } else {
-                        finalStatusText = "Wrong Answer";
-                    }
-                    finalStatusColor = "text-red-400";
-                }
-                
+            if (allPassed) {
                 return (
-                    <div className="flex flex-col items-center justify-center h-full text-center">
-                        <h3 className={`text-3xl font-bold mb-2 ${finalStatusColor}`}>{finalStatusText}</h3>
-                        <p className="text-gray-300 text-lg">
-                            Your submission has been processed.
-                        </p>
+                    <div className="flex flex-col items-center justify-center h-full text-center animate-in zoom-in duration-300">
+                        <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                        </div>
+                        <h3 className="text-3xl font-black text-green-400 mb-2 uppercase tracking-tight">Accepted</h3>
+                        <p className="text-gray-400">All {totalCount} test cases passed successfully.</p>
+                    </div>
+                );
+            } else {
+                const firstFail = testResults.find(r => r.status !== 'pass');
+                return (
+                    <div className="flex flex-col items-center justify-center h-full text-center animate-in zoom-in duration-300">
+                        <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
+                        </div>
+                        <h3 className="text-3xl font-black text-red-400 mb-2 uppercase tracking-tight">
+                            {firstFail?.status === 'error' ? 'Runtime Error' : 'Wrong Answer'}
+                        </h3>
+                        <p className="text-gray-400">Passed {passCount} / {totalCount} test cases.</p>
                     </div>
                 );
             }
-            // Detailed view for custom test cases
-            return <DetailedTestResults results={testResults} />;
         }
 
         if (isLoading && !output) {
             return (
                 <div className="flex items-center justify-center h-full">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                    <div className="w-8 h-8 border-3 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
                 </div>
             );
         }
@@ -191,19 +140,22 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({ output, isLoading,
         }
         
         if (!output) {
-            return <div className="text-gray-500 italic">Run code or tests to see the output.</div>;
+            return <div className="text-gray-500 italic">Run code or submit to see the results.</div>;
         }
         
         return <OutputContent output={output} />;
     };
 
     return (
-        <div className="flex flex-col h-full bg-[#2d3748] border border-slate-600 rounded-md overflow-hidden text-gray-200">
-            <div className="flex justify-between items-center p-2 border-b border-slate-600 bg-slate-700">
-                <h3 className="text-base font-medium text-gray-200 px-2">{testResults ? 'Test Results' : 'Output'}</h3>
+        <div className="flex flex-col h-full bg-[#1a202c] border border-slate-700 rounded-md overflow-hidden text-gray-200">
+            <div className="flex justify-between items-center p-3 border-b border-slate-700 bg-slate-800">
+                <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                    <h3 className="text-sm font-bold text-gray-300 uppercase tracking-widest">{testResults ? 'Submission Status' : 'Console Output'}</h3>
+                </div>
                  <button
                     onClick={onClear}
-                    className="text-sm text-gray-300 hover:text-white px-3 py-1 border border-slate-500 rounded hover:bg-slate-600 transition"
+                    className="text-xs text-gray-400 hover:text-white px-2 py-1 rounded transition-colors"
                  >
                     Clear
                  </button>
@@ -212,7 +164,7 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({ output, isLoading,
                 {renderContent()}
                 {showInputPrompt && (
                      <form onSubmit={handleFormSubmit} className="flex items-center mt-2">
-                        <span className="text-gray-300 mr-2 flex-shrink-0">&gt;</span>
+                        <span className="text-blue-500 mr-2 flex-shrink-0">➜</span>
                         <input
                             ref={inputRef}
                             type="text"
@@ -224,11 +176,6 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({ output, isLoading,
                             spellCheck="false"
                         />
                      </form>
-                )}
-                 {isLoading && output && !isExecutionFinished && (
-                    <div className="flex items-center mt-2">
-                         <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-blue-500"></div>
-                    </div>
                 )}
             </div>
         </div>

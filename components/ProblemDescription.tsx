@@ -65,6 +65,12 @@ export const ProblemDescription: React.FC<ProblemDescriptionProps> = ({ challeng
     return (
         <div>
             <Section title="Problem Statement">
+                {challenge.problemImage && (
+                    <div 
+                        className="mb-4 bg-white p-4 rounded-md flex justify-center" 
+                        dangerouslySetInnerHTML={{ __html: challenge.problemImage }} 
+                    />
+                )}
                 {renderContent(challenge.objective)}
             </Section>
 
