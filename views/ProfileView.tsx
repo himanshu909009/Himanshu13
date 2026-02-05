@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { RecentActivity } from '../components/RecentActivity';
+import { Heatmap } from '../components/Heatmap';
 import type { User } from '../types';
 
 interface ProfileViewProps {
@@ -140,7 +141,8 @@ export function ProfileView({ user, onUserUpdate, onNavigate }: ProfileViewProps
             </div>
           </div>
 
-          <div className="lg:w-3/4">
+          <div className="lg:w-3/4 space-y-8">
+            <Heatmap submissions={user.submissions} />
             <RecentActivity activities={user.submissions} onActivitySelect={onNavigate.bind(null, 'challengeEditor')} />
           </div>
         </div>

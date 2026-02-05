@@ -9,24 +9,56 @@ interface OutputDisplayProps {
   onClear: () => void;
   testResults: TestResult[] | null;
   isTesting: boolean;
+  aiFeedback?: string | null;
+  isAiLoading?: boolean;
 }
 
-const OutputContent: React.FC<{ output: SimulationOutput }> = ({ output }) => {
+const OutputContent: React.FC<{ output: SimulationOutput; aiFeedback?: string | null; isAiLoading?: boolean }> = ({ output, aiFeedback, isAiLoading }) => {
     const { compilation, output: programOutput } = output;
 
     if (compilation.status === 'error') {
         const { message, line, column } = compilation;
         return (
-            <div>
-                <div className="bg-red-900/30 border border-red-700 p-3 rounded-md font-mono">
-                    <p className="font-sans font-bold text-red-400 mb-2 text-base">Compilation Error</p>
+            <div className="space-y-4">
+                <div className="bg-red-900/20 border border-red-800/50 p-4 rounded-lg font-mono">
+                    <div className="flex items-center gap-2 text-red-400 font-black uppercase tracking-widest text-xs mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                        </svg>
+                        Compilation Error
+                    </div>
                     {line && (
-                        <p className="text-sm text-yellow-400 mb-2">
-                            Location: Line {line}{column ? `, Column ${column}` : ''}
+                        <p className="text-sm text-yellow-400/80 mb-2 font-bold">
+                            Line {line}{column ? `, Column ${column}` : ''}
                         </p>
                     )}
-                    <pre className="text-red-300 whitespace-pre-wrap break-words text-sm">{message}</pre>
+                    <pre className="text-red-300/90 whitespace-pre-wrap break-words text-sm leading-relaxed">{message}</pre>
                 </div>
+
+                {(isAiLoading || aiFeedback) && (
+                    <div className="bg-indigo-900/20 border border-indigo-500/30 p-4 rounded-lg animate-in slide-in-from-bottom-2 duration-500">
+                        <div className="flex items-center gap-2 text-indigo-400 font-black uppercase tracking-widest text-xs mb-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ${isAiLoading ? 'animate-pulse' : ''}`} viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 01-1 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.477.859h4z" />
+                            </svg>
+                            AI Smart Debugger
+                        </div>
+                        {isAiLoading ? (
+                            <div className="flex items-center gap-2 text-indigo-300/70 text-sm italic">
+                                <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce"></div>
+                                <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                                <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+                                Thinking...
+                            </div>
+                        ) : (
+                            <div className="text-indigo-100/90 text-sm leading-relaxed prose prose-invert prose-sm max-w-none">
+                                {aiFeedback?.split('\n').map((line, i) => (
+                                    <p key={i} className="mb-1">{line}</p>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
         );
     }
@@ -54,7 +86,17 @@ const OutputContent: React.FC<{ output: SimulationOutput }> = ({ output }) => {
     return <pre className={`${className} whitespace-pre-wrap break-words`}>{content}</pre>;
 };
 
-export const OutputDisplay: React.FC<OutputDisplayProps> = ({ output, isLoading, error, onInputSubmit, onClear, testResults, isTesting }) => {
+export const OutputDisplay: React.FC<OutputDisplayProps> = ({ 
+    output, 
+    isLoading, 
+    error, 
+    onInputSubmit, 
+    onClear, 
+    testResults, 
+    isTesting,
+    aiFeedback,
+    isAiLoading
+}) => {
     const [currentLine, setCurrentLine] = useState('');
     const inputRef = useRef<HTMLInputElement>(null);
     const terminalBodyRef = useRef<HTMLDivElement>(null);
@@ -143,7 +185,7 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({ output, isLoading,
             return <div className="text-gray-500 italic">Run code or submit to see the results.</div>;
         }
         
-        return <OutputContent output={output} />;
+        return <OutputContent output={output} aiFeedback={aiFeedback} isAiLoading={isAiLoading} />;
     };
 
     return (

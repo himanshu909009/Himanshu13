@@ -6,7 +6,7 @@ import { ChallengeListView } from './views/ChallengeListView';
 import { ChallengeEditorView } from './views/ChallengeEditorView';
 import { LoginView } from './views/LoginView';
 import { AdminDashboardView } from './views/AdminDashboardView';
-import { CPP_CHALLENGES, PRACTICE_LANGUAGES, INITIAL_USER, COURSE_DETAILS } from './constants';
+import { CPP_CHALLENGES, JAVA_CHALLENGES, PRACTICE_LANGUAGES, INITIAL_USER, COURSE_DETAILS } from './constants';
 import { ProblemsView } from './views/ProblemsView';
 import { ProfileView } from './views/ProfileView';
 import { CourseDetailView } from './views/CourseDetailView';
@@ -46,18 +46,19 @@ function App() {
   });
 
   const [challenges, setChallenges] = useState<Challenge[]>(() => {
+    const defaultChallenges = [...CPP_CHALLENGES, ...JAVA_CHALLENGES];
     try {
         const saved = localStorage.getItem(CHALLENGES_STORAGE_KEY);
         if (saved) {
             const parsed = JSON.parse(saved);
             const savedIds = new Set(parsed.map((c: Challenge) => c.id));
-            const defaultsToAdd = CPP_CHALLENGES.filter(c => !savedIds.has(c.id));
+            const defaultsToAdd = defaultChallenges.filter(c => !savedIds.has(c.id));
             return [...parsed, ...defaultsToAdd];
         }
     } catch (e) {
         console.error("Error loading challenges", e);
     }
-    return CPP_CHALLENGES;
+    return defaultChallenges;
   });
 
   useEffect(() => {
@@ -137,14 +138,6 @@ function App() {
     }
   };
 
-  const handleAddChallenge = (newChallenge: Challenge) => {
-    setChallenges(prev => [newChallenge, ...prev]);
-  };
-
-  const handleDeleteChallenge = (id: number) => {
-    setChallenges(prev => prev.filter(c => c.id !== id));
-  };
-
   const handleNavigate = (view: View, context?: string | number) => {
     if (view === 'challengeEditor') {
         setEditorOrigin(currentView);
@@ -181,11 +174,7 @@ function App() {
       case 'login':
         return <LoginView onLogin={handleLogin} />;
       case 'admin':
-        return <AdminDashboardView 
-            onAddChallenge={handleAddChallenge} 
-            challenges={challenges}
-            onDeleteChallenge={handleDeleteChallenge}
-        />;
+        return <AdminDashboardView />;
       case 'courses':
         return <CoursesView 
           user={user} 
@@ -199,6 +188,7 @@ function App() {
             const courseKeyMap: Record<string, string> = {
                 'Practice C++': 'C++',
                 'Practice Python': 'Python',
+                'Practice Java': 'Java',
             };
             const courseKey = courseKeyMap[courseTitle];
             
@@ -214,10 +204,21 @@ function App() {
         return <ProfileView user={user} onUserUpdate={handleUserUpdate} onNavigate={(view, id) => handleNavigate(view as View, id)} />;
       case 'challengeList':
         const backView: View = PRACTICE_LANGUAGES.some(p => p.name === selectedCourse) ? 'practice' : 'courses';
+        
+        // Filter challenges for this course
+        const title = selectedCourse?.toLowerCase() || '';
+        const courseChallenges = challenges.filter(c => {
+            if (title.includes('c++')) return c.category.toLowerCase().includes('c++');
+            if (title.includes('java')) return c.category.toLowerCase().includes('java');
+            if (title.includes('algorithms')) return c.category.toLowerCase().includes('algorithms');
+            if (title.includes('c') && !title.includes('c++')) return c.category.toLowerCase().includes('c (');
+            return true;
+        });
+
         return <ChallengeListView 
             user={user}
             courseTitle={selectedCourse || 'Challenges'} 
-            challenges={challenges} 
+            challenges={courseChallenges} 
             onBack={() => handleNavigate(backView)}
             onChallengeSelect={(challengeId) => handleNavigate('challengeEditor', challengeId)}
         />;
@@ -255,12 +256,14 @@ function App() {
 
   return (
     <div className="bg-gray-900 text-white h-screen flex flex-col">
-      <Header 
-        currentView={currentView} 
-        onNavigate={handleNavigate as (view: string) => void}
-        user={user}
-        onLogout={handleLogout}
-      />
+      {isLoggedIn && (
+        <Header 
+          currentView={currentView} 
+          onNavigate={handleNavigate as (view: string) => void}
+          user={user}
+          onLogout={handleLogout}
+        />
+      )}
       <main className="flex-grow min-h-0">
         {renderView()}
       </main>

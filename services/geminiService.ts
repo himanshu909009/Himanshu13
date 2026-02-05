@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 // Fix: Use 'import type' for type-only imports and combine them.
 import type { Language, SimulationOutput, VirtualFile, TestCase } from '../types';
@@ -93,7 +92,8 @@ export async function runCodeSimulation(
       \`\`\`
     `).join('')}
 
-    **Standard Input (stdin):**
+    **Standard Input / Command Line Arguments:**
+    The following data is provided. If the code uses standard input (e.g., Scanner, cin, scanf, input()), treat this as stdin. If the code uses command-line arguments (e.g., String[] args in Java, sys.argv in Python), use this data as the arguments (split by whitespace if multiple).
     \`\`\`
     ${input}
     \`\`\`
@@ -104,28 +104,25 @@ export async function runCodeSimulation(
         *   If there are compilation errors, stop. Report them in \`compilation\`. **If the error has a line/column, you MUST extract them.**
         *   If compilation succeeds, report success.
     2.  **Simulate Execution & Performance:**
-        *   Run the code. If the provided stdin is not sufficient for the program to run to completion, simulate the execution up to the point where the program is waiting for the next piece of input.
+        *   Run the code. If the provided input is not sufficient for the program to run to completion, simulate the execution up to the point where the program is waiting for the next piece of input.
         *   **Simulate performance:** Provide realistic estimates for \`timeUsage\` (in milliseconds) and \`memoryUsage\` (in kilobytes). For simple 'Hello World' programs, this should be very low (e.g., < 5ms, < 1024KB).
         *   **Simulate File I/O:** If the code writes to a file (new or existing), you must capture the final state of that file.
     3.  **Format the Output:**
         *   You MUST respond with a single, valid JSON object that strictly adheres to the schema.
         *   **Create a Structured Transcript:** In the \`output.transcript\` array, provide a structured log of the execution. This should be an array of objects, where each object represents a chunk of output (\`stdout\`, \`stderr\`) or input (\`stdin\`).
-        *   The order of the array elements must represent the chronological order of events. For example: \`[{type: "stdout", content: "Enter name: "}, {type: "stdin", content: "Alice\\n"}, ...]\`.
-        *   Combine consecutive prints into a single \`stdout\` part. Each \`stdin\` part should correspond to a single read operation (e.g., one \`scanf\`).
-        *   **Indicate Execution State:** In \`output.isExecutionFinished\`, you MUST set it to \`true\` if the program ran to completion or terminated with an error. Set it to \`false\` ONLY if the program is currently blocked and waiting for more standard input.
-        *   **In the \`output.files\` array, return ONLY the files that were created or modified during execution.** Do not return unchanged files. If no files were changed, return an empty array or omit the field.
+        *   The order of the array elements must represent the chronological order of events.
+        *   Combine consecutive prints into a single \`stdout\` part.
+        *   **Indicate Execution State:** In \`output.isExecutionFinished\`, you MUST set it to \`true\` if the program ran to completion or terminated with an error. Set it to \`false\` ONLY if the program is currently blocked and waiting for more input.
+        *   **In the \`output.files\` array, return ONLY the files that were created or modified during execution.**
 
-    **Strict Output Formatting (Most Important Rule for Automated Judging):**
-    *   The \`output.stdout\` field is CRITICAL for automated judging. It must contain ONLY the program's result output.
-    *   **Exclude Input Prompts:** Programs often print prompts like "Enter your name: ". These prompts MUST BE EXCLUDED from the \`output.stdout\` field. The \`stdout\` field should only contain the actual data output, as if it were being graded by a machine.
-    *   **Keep Transcript Complete:** While prompts are excluded from \`stdout\`, they SHOULD be included in the \`output.transcript\` to show the full interaction chronologically.
-    *   **No Extra Text:** DO NOT add any conversational text, explanations, or status messages like "Program finished successfully." to the \`stdout\`.
-    *   **Example:** If code is \`cout << "Enter radius: "; cin >> r; cout << 3.14*r*r;\` and stdin is \`10\`, the \`stdout\` MUST be just \`"314"\`. The \`transcript\` would be \`[{type: "stdout", content: "Enter radius: "}, {type: "stdin", content: "10\\n"}, {type: "stdout", content: "314"}]\`.
-    *   **The content of \`stdout\` must be character-for-character identical to what an automated judge expects.** This is the most common reason for "Wrong Answer" failures.
+    **Strict Output Formatting:**
+    *   The \`output.stdout\` field must contain ONLY the program's result output.
+    *   **Exclude Input Prompts:** Prompts like "Enter your name: " MUST BE EXCLUDED from the \`output.stdout\` field.
+    *   **No Extra Text:** DO NOT add any conversational text or explanations like "Program finished successfully." to the \`stdout\`.
+    *   **Character Accuracy:** The content of \`stdout\` must be character-for-character identical to what an automated judge expects.
   `;
 
   try {
-    // Fixed: Always use ai.models.generateContent and compliant model for complex tasks
     const response = await ai.models.generateContent({
       model: "gemini-3-pro-preview",
       contents: prompt,
@@ -154,9 +151,12 @@ export async function runCodeSimulation(
 
 export async function getAiErrorExplanation(language: Language, code: string, errorMessage: string): Promise<string> {
     const prompt = `
-        You are an expert coding mentor helping a beginner. The user has a syntax or compilation error.
+        You are a friendly and supportive coding assistant like the one in LeetCode or CodeChef. 
+        A user has a compilation error. Your goal is to explain it clearly and help them fix it.
+
+        **Tone:** Friendly, encouraging, and clear. Start with a warm greeting like "Hello there!" or "Let's figure this out together!".
         
-        **Your Goal:** Guide the user to find the error themselves. Do NOT provide the fixed code snippet. Be extremely concise.
+        **Your Goal:** Explain the error concisely. Point out the specific line or token that caused the problem. 
 
         **Language:** ${language}
 
@@ -171,15 +171,14 @@ export async function getAiErrorExplanation(language: Language, code: string, er
         \`\`\`
 
         **Instructions:**
-        1.  **Identify the Issue:** Briefly state what concepts are involved (e.g., "missing semicolon", "indentation error", "type mismatch").
-        2.  **Locate it:** Point to the specific line or logic where the error likely is.
-        3.  **Give a Hint:** Provide a specific clue or question to help them fix it (e.g., "Did you remember to close the parenthesis on line 5?" or "Check if you are mixing integers and strings").
-        4.  **Constraint:** Do NOT write the corrected code block. Do NOT write the solution. Only give the hint.
-        5.  **Brevity:** Keep the response under 3 sentences if possible.
+        1.  **Greeting:** Start with something friendly.
+        2.  **Explain the Error:** Translate the technical error into simple English.
+        3.  **The "Spot":** Tell them exactly where the issue is (e.g., "Look at line 5").
+        4.  **The Fix:** Give a hint or a small example of how it *should* look, but don't just rewrite their whole program.
+        5.  **Markdown:** Use bold text for emphasis and code blocks for short snippets.
     `;
 
     try {
-        // Fixed: Always use ai.models.generateContent and compliant model for complex tasks
         const response = await ai.models.generateContent({
             model: 'gemini-3-pro-preview',
             contents: prompt,
@@ -196,7 +195,7 @@ export async function getAiFailureAnalysis(
     code: string, 
     testCaseInput: string,
     expectedOutput: string,
-    actualOutput: string, // This can be either stdout or stderr
+    actualOutput: string, 
     isRuntimeError: boolean
 ): Promise<string> {
     const failureType = isRuntimeError ? "produced a runtime error" : "produced the wrong output";
@@ -214,7 +213,7 @@ export async function getAiFailureAnalysis(
         \`\`\`
 
         **Test Case Details:**
-        - **Input (stdin):**
+        - **Input (stdin/args):**
         \`\`\`
         ${testCaseInput || "(empty)"}
         \`\`\`
@@ -229,16 +228,15 @@ export async function getAiFailureAnalysis(
         \`\`\`
 
         **Instructions:**
-        1.  Start by greeting the user in a friendly tone and acknowledge that debugging is a normal part of programming.
-        2.  Explain the discrepancy. What was the code supposed to do based on the input and expected output? What did it do instead?
-        3.  Analyze the user's code to find the most likely logical error that caused this failure. Point to specific lines or blocks of code.
-        4.  Explain *why* this part of the code is incorrect for the given test case. For example, "Your loop condition is off-by-one, which causes it to miss the last element," or "You are not handling the edge case where the input is empty."
-        5.  Suggest a clear and specific way to fix the code. Provide a corrected code snippet if it's helpful.
-        6.  Keep your tone encouraging, constructive, and focused on helping the user learn.
+        1.  Start by greeting the user in a friendly tone.
+        2.  Explain the discrepancy. What was the code supposed to do? What did it do instead?
+        3.  Analyze the user's code to find the most likely logical error.
+        4.  Explain *why* this part of the code is incorrect.
+        5.  Suggest a clear and specific way to fix the code. Provide a corrected code snippet if helpful.
+        6.  Keep your tone encouraging.
     `;
 
     try {
-        // Fixed: Always use ai.models.generateContent and compliant model for complex tasks
         const response = await ai.models.generateContent({
             model: 'gemini-3-pro-preview',
             contents: prompt,
@@ -296,15 +294,14 @@ export async function getAiCodeCompletion(
     \`\`\`
 
     **Instructions:**
-    1.  Analyze the code context (variables, functions, scope, syntax).
+    1.  Analyze the code context.
     2.  Provide a list of up to 5 most likely code completion suggestions.
     3.  The suggestions should be what the user might type *next*, starting from the cursor position.
-    4.  Do not repeat the code that is already before the cursor. For example, if the code is \`console.\`, a good suggestion is \`log\`, not \`console.log\`.
+    4.  Do not repeat the code already before the cursor.
     5.  Respond with a single, valid JSON object that strictly adheres to the schema.
   `;
 
   try {
-    // Fixed: Always use ai.models.generateContent and compliant model for complex tasks
     const response = await ai.models.generateContent({
       model: "gemini-3-pro-preview",
       contents: prompt,

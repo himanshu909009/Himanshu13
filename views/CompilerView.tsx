@@ -33,6 +33,7 @@ export function CompilerView({ user }: CompilerViewProps) {
     const [errorColumn, setErrorColumn] = useState<number | null>(null);
     const [aiExplanation, setAiExplanation] = useState<string | null>(null);
     const [isAiLoading, setIsAiLoading] = useState<boolean>(false);
+    const [showAiModal, setShowAiModal] = useState<boolean>(false);
 
     const handleCodeChange = useCallback((newCode: string) => {
         setCode(newCode);
@@ -48,6 +49,7 @@ export function CompilerView({ user }: CompilerViewProps) {
         setOutput(null);
         setError(null);
         setFullInput("");
+        setShowAiModal(false);
     };
 
     const handleRunCode = useCallback(async (inputToUse: string) => {
@@ -56,6 +58,8 @@ export function CompilerView({ user }: CompilerViewProps) {
         setOutput(null);
         setErrorLine(null);
         setErrorColumn(null);
+        setAiExplanation(null);
+        setShowAiModal(false);
 
         try {
             const result = await runCodeSimulation(language, [{ id: '1', name: getFileName(language), content: code }], '1', inputToUse);
@@ -64,6 +68,7 @@ export function CompilerView({ user }: CompilerViewProps) {
                 setErrorLine(result.compilation.line ?? null);
                 setErrorColumn(result.compilation.column ?? null);
                 setIsAiLoading(true);
+                setShowAiModal(true);
                 try {
                     const explanation = await getAiErrorExplanation(language, code, result.compilation.message);
                     setAiExplanation(explanation);
@@ -79,7 +84,7 @@ export function CompilerView({ user }: CompilerViewProps) {
     }, [language, code]);
 
     return (
-        <div className="p-4 sm:p-6 lg:p-8">
+        <div className="p-4 sm:p-6 lg:p-8 relative h-full">
             <div className="max-w-screen-2xl mx-auto h-[85vh] flex flex-col gap-4">
                 <div className="flex justify-between items-center bg-gray-800 p-3 rounded-t-lg border border-gray-700">
                     <div className="flex items-center gap-4">
@@ -121,6 +126,13 @@ export function CompilerView({ user }: CompilerViewProps) {
                     </div>
                 </div>
             </div>
+
+            {/* AI Assistant Popup */}
+            <AiAgent 
+                explanation={aiExplanation} 
+                isLoading={isAiLoading} 
+                onClose={() => setShowAiModal(false)} 
+            />
         </div>
     );
 }

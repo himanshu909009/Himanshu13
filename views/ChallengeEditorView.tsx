@@ -2,8 +2,9 @@ import React, { useState, useCallback } from 'react';
 import { ProblemDescription } from '../components/ProblemDescription';
 import { CodeEditor } from '../components/CodeEditor';
 import { OutputDisplay } from '../components/OutputDisplay';
+import { AiAgent } from '../components/AiAgent';
 import type { Challenge, SimulationOutput, Language, TestResult, User, RecentActivityItem } from '../types';
-import { runCodeSimulation } from '../services/geminiService';
+import { runCodeSimulation, getAiErrorExplanation } from '../services/geminiService';
 import { LanguageSelector } from '../components/LanguageSelector';
 import { LANGUAGES, DEFAULT_CODE } from '../constants';
 
@@ -23,6 +24,9 @@ export function ChallengeEditorView({ challenge, user, onUserUpdate, onBack }: C
     const [error, setError] = useState<string | null>(null);
     const [errorLine, setErrorLine] = useState<number | null>(null);
     const [testResults, setTestResults] = useState<TestResult[] | null>(null);
+    const [aiFeedback, setAiFeedback] = useState<string | null>(null);
+    const [isAiLoading, setIsAiLoading] = useState<boolean>(false);
+    const [showAiModal, setShowAiModal] = useState<boolean>(false);
 
     const handleRunCode = async () => {
         setIsLoading(true);
@@ -30,17 +34,33 @@ export function ChallengeEditorView({ challenge, user, onUserUpdate, onBack }: C
         setError(null);
         setErrorLine(null);
         setTestResults(null);
+        setAiFeedback(null);
+        setShowAiModal(false);
 
         try {
             const result = await runCodeSimulation(language, [{ id: '1', name: 'main', content: code }], '1', "");
             setOutput(result);
             if (result.compilation.status === 'error') {
                 setErrorLine(result.compilation.line ?? null);
+                fetchAiFeedback(result.compilation.message);
             }
         } catch (e) {
             setError(e instanceof Error ? e.message : "Error running code.");
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const fetchAiFeedback = async (errorMessage: string) => {
+        setIsAiLoading(true);
+        setShowAiModal(true);
+        try {
+            const feedback = await getAiErrorExplanation(language, code, errorMessage);
+            setAiFeedback(feedback);
+        } catch (e) {
+            console.error("AI Feedback failed", e);
+        } finally {
+            setIsAiLoading(false);
         }
     };
 
@@ -55,6 +75,8 @@ export function ChallengeEditorView({ challenge, user, onUserUpdate, onBack }: C
         setOutput(null);
         setError(null);
         setErrorLine(null);
+        setAiFeedback(null);
+        setShowAiModal(false);
 
         const results: TestResult[] = [];
         let allPassed = true;
@@ -72,6 +94,7 @@ export function ChallengeEditorView({ challenge, user, onUserUpdate, onBack }: C
                     });
                     allPassed = false;
                     setErrorLine(result.compilation.line ?? null);
+                    fetchAiFeedback(result.compilation.message);
                     break; // Stop on compilation error
                 }
 
@@ -116,7 +139,7 @@ export function ChallengeEditorView({ challenge, user, onUserUpdate, onBack }: C
     };
 
     return (
-        <div className="flex h-full">
+        <div className="flex h-full relative">
             <div className="w-1/2 p-6 bg-gray-800 overflow-y-auto border-r border-gray-700">
                 <button onClick={onBack} className="text-gray-400 hover:text-white mb-4 flex items-center gap-2 transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -165,10 +188,20 @@ export function ChallengeEditorView({ challenge, user, onUserUpdate, onBack }: C
                         onClear={() => {
                             setOutput(null);
                             setTestResults(null);
+                            setAiFeedback(null);
                         }} 
                     />
                 </div>
             </div>
+
+            {/* AI Assistant Popup */}
+            {showAiModal && (
+                <AiAgent 
+                    explanation={aiFeedback} 
+                    isLoading={isAiLoading} 
+                    onClose={() => setShowAiModal(false)} 
+                />
+            )}
         </div>
     );
 }

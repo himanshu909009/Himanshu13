@@ -75,7 +75,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, user, o
                             alt={`${user.name}'s profile picture`}
                         />
                     ) : (
-                        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-[11px] font-bold text-white border border-blue-400/30">
+                        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-600 to-fuchsia-700 flex items-center justify-center text-[11px] font-black text-white border border-purple-400/30 shadow-inner">
                             {getInitials(user.name)}
                         </div>
                     )}
